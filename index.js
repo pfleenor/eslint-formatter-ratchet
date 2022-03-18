@@ -29,7 +29,11 @@ module.exports = function (results, context, logger = console) {
   //   }
   // }
   results.forEach(({ messages, filePath, errorCount, warningCount }) => {
-    const file = path.relative(cwd, filePath);
+    const file = path
+      .relative(cwd, filePath)
+      .split(path.sep)
+      .join(path.posix.sep);
+      
     filesLinted.push(file);
     if (errorCount > 0 || warningCount > 0) {
       latestIssues[file] = {};
