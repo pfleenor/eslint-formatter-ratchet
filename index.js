@@ -11,6 +11,7 @@ const path = require('path');
 module.exports = function (results, context, logger = console) {
   const filesLinted = [];
   const latestIssues = {};
+  removeErrorFile();
 
   // Get previous/latest warning/error counts overall and group them per file/rule
   let previousIssues = {};
@@ -105,7 +106,7 @@ module.exports = function (results, context, logger = console) {
       logger
     );
 
-    // If we find any "issues" (increased/new counts) throw a warning and fail the ratcheting check
+    // If we find any "issues" (increased/new counts)
     if (newIssues > 0) {
       logger.log(
         fire,
@@ -118,7 +119,8 @@ module.exports = function (results, context, logger = console) {
           "eslint-ratchet.json"
         )} and check it in.`
       );
-      throw new Error("View output above for more details");
+      createErrorFile();
+
     } else {
       // Otherwise update the ratchet tracking and log a message about it
       fs.writeFileSync(
@@ -129,6 +131,9 @@ module.exports = function (results, context, logger = console) {
         "./eslint-ratchet-temp.json",
         JSON.stringify({}, null, 4)
       );
+
+      removeErrorFile();
+
       return chalk.green(
         `Changes found are all improvements! These new results have been saved to ${chalk.white.underline(
           "eslint-ratchet.json"
@@ -140,6 +145,16 @@ module.exports = function (results, context, logger = console) {
   // Because eslint expects a string response from formatters, but our messaging is already complete, just
   // return an empty string.
   return "";
+};
+
+const removeErrorFile = () => {
+  if (fs.existsSync("./eslint-ratchet-errors")) {
+    fs.unlinkSync("./eslint-ratchet-errors");
+  }
+};
+
+const createErrorFile = () => {
+  fs.writeFileSync("./eslint-ratchet-errors", "");
 };
 
 // Log the results of a change based on the type of change.
